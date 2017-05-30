@@ -12,6 +12,7 @@ def DrawSameFromList(hTitle,hlist,legend):
         ymaxs.append( h.getTH1().GetMaximum() )
         legend.AddEntry(h.getTH1(),h.getTH1().GetName(),"l")
     hlist[0].getTH1().SetMaximum( max(ymaxs)*1.5 )
+    hlist[0].getTH1().GetXaxis().SetRangeUser(1500,13000) 
     if (not min(ymins)==0): 
         hlist[0].getTH1().SetMinimum( min(ymins)*0.5 )
     elif (c1.GetLogy()):
@@ -65,36 +66,38 @@ def makepdf(pages,outputFile):
 
 # return the class name given a list of keys in ROOT file
 def getClassName(keys,hKey):
-	foundKey=False
-	className=""
-	for key in keys:
-		if key.GetName()==hKey:	
-			#print key.GetName(),hKey,key.GetClassName()
-			className = key.GetClassName()
-			foundKey=True
-			continue
-	return className
+    foundKey=False
+    className=""
+    for key in keys:
+        if key.GetName()==hKey: 
+            #print key.GetName(),hKey,key.GetClassName()
+            className = key.GetClassName()
+            foundKey=True
+            continue
+    return className
 
 # input: List of dicts{fname,hname}, hKey
-# fname = name of file,   hname = name of histo label
-# hKey  = historgram name in each files
+# fname   = name of file,   hname = name of histo label
+# hKey    = historgram name in each files
+# setting = a dict with : {"xlow","xup","isLogY","i_style"} 
 def getHlistFromFiles(flist,hKey,xLabel,yLabel,style_init=0):
-	hlist =[]
-	istyle=style_init
-	for f in flist:
-		rootfile = TFile(f['fname'])
-		#rootfile.ls()
-		keys  =  rootfile.GetListOfKeys()
-		className = getClassName(keys,hKey)
-		if ("TProfile" in className):
-			hist      = rootfile.Get(hKey).ProjectionX()
-		else:
-			hist      = rootfile.Get(hKey)
-		hist.SetDirectory(0)
-		label    = {'Name':f['hname'],'x':xLabel,'y':yLabel}
-		hlist.append(hPlus(hist,style(istyle),label))
-		istyle= istyle+1
-	return hlist
+    hlist =[]
+    #istyle=setting['i_style']
+    istyle=style_init
+    for f in flist:
+        rootfile = TFile(f['fname'])
+        #rootfile.ls()
+        keys  =  rootfile.GetListOfKeys()
+        className = getClassName(keys,hKey)
+        if ("TProfile" in className):
+            hist      = rootfile.Get(hKey).ProjectionX()
+        else:
+            hist      = rootfile.Get(hKey)
+        hist.SetDirectory(0)
+        label    = {'Name':f['hname'],'x':xLabel,'y':yLabel}
+        hlist.append(hPlus(hist,style(istyle),label))
+        istyle= istyle+1
+    return hlist
 
 # For drawing N different histogram in same file
 # hKeys = list of hDict
