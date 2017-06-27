@@ -2,7 +2,7 @@ from ROOT import *
 from hPlus import *
 from style import *
 
-def DrawSameFromList(hTitle,hlist,legend):
+def DrawSameFromList(hTitle,hlist,legend,Setting=None):
     ymins = []
     ymaxs = []
     for h in hlist:
@@ -12,13 +12,18 @@ def DrawSameFromList(hTitle,hlist,legend):
         ymaxs.append( h.getTH1().GetMaximum() )
         legend.AddEntry(h.getTH1(),h.getTH1().GetName(),"l")
     hlist[0].getTH1().SetMaximum( max(ymaxs)*1.5 )
-    hlist[0].getTH1().GetXaxis().SetRangeUser(1500,13000) 
+    if ((not Setting is None) and ("xlow" in Setting) and ("xup" in Setting)):
+        hlist[0].getTH1().GetXaxis().SetRangeUser(Setting["xlow"],Setting["xup"]) 
     if (not min(ymins)==0): 
         hlist[0].getTH1().SetMinimum( min(ymins)*0.5 )
     elif (c1.GetLogy()):
         hlist[0].getTH1().SetMinimum( min(ymins)+1E-1 ) # if there are empty bins but we need log axis
     else:
         hlist[0].getTH1().SetMinimum( 0 )
+ 
+    if ((not Setting is None) and ("ylow" in Setting) and ("yup" in Setting)):
+        hlist[0].getTH1().GetYaxis().SetRangeUser(Setting["ylow"],Setting["yup"]) 
+    #hlist[0].getTH1().GetYaxis().SetRangeUser(0,5) 
     hlist[0].getTH1().SetTitle(hTitle)
     hlist.pop(0).getTH1().Draw()
     for h in hlist:
@@ -40,7 +45,10 @@ def makepdf(pages,outputFile):
     IsLast = False
     for page in pages:
         # Prepare the canvas
-        DrawSameFromList(page["Title"],page["list"],page["legend"])
+        if (not "Setting" in page):
+           DrawSameFromList(page["Title"],page["list"],page["legend"])
+        else:
+           DrawSameFromList(page["Title"],page["list"],page["legend"],page["Setting"])
         # Open a new page
         if(nPages==0): 
             if(int(nItems/nPad)==1):
