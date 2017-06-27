@@ -11,10 +11,14 @@ legend     = TLegend(0.5,0.7,0.9,0.9, "", "brNDC")
 
 #f1 = path to filename,  labelname = label for histograms from this file
 flistOfDict.append({'fname':f1,'hname':"labelname"})
+
+#Setting for ranges: xlow,xup, ylow,yup
+Setting ={"xlow":0}
+
 #Make Pages (get from files)
 for i in range(2,12):
     page  = getHlistFromFiles(flistOfDict,"ST/stExc%02iHist"%i,"ST/GeV","N")
-    Pages.append({'Title':"ST(N=%s)"%i,"list":page,"legend":legend})
+    Pages.append({'Title':"ST(N=%s)"%i,"list":page,"legend":legend,"Setting":Setting})
 
 c1 = TCanvas("c1","c1",800,600)
 gStyle.SetOptStat(0)
