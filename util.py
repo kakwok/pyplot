@@ -1,6 +1,7 @@
 from ROOT import *
 from hPlus import *
 from style import *
+import os,CMS_lumi
 
 def DrawSameFromList(hTitle,hlist,legend,Setting=None):
     ymins = []
@@ -21,46 +22,65 @@ def DrawSameFromList(hTitle,hlist,legend,Setting=None):
     else:
         hlist[0].getTH1().SetMinimum( 0 )
  
+    if ((not Setting is None) and ("ylow" in Setting)):
+        hlist[0].getTH1().SetMinimum( Setting["ylow"] )
     if ((not Setting is None) and ("ylow" in Setting) and ("yup" in Setting)):
         hlist[0].getTH1().GetYaxis().SetRangeUser(Setting["ylow"],Setting["yup"]) 
+    if ((not Setting is None) and ("logy" in Setting)):
+        print "Setting logY to %s"%Setting["logy"]
+        c1.SetLogy(Setting["logy"])
     #hlist[0].getTH1().GetYaxis().SetRangeUser(0,5) 
     hlist[0].getTH1().SetTitle(hTitle)
-    hlist.pop(0).getTH1().Draw()
+    hlist[0].getTH1().GetYaxis().SetTitleOffset(1.4)
+    hlist.pop(0).getTH1().Draw("HIST")
     for h in hlist:
         print h.getTH1().GetName(),h.getTH1().GetMean(1)
-        h.getTH1().Draw("Same")
+        h.getTH1().Draw("Same HIST")
     legend.SetTextFont(42)
-    legend.SetTextSize(0.03)
+    legend.SetTextSize(0.025)
+    legend.SetBorderSize(0)
     legend.Draw()
     #c1.BuildLegend(0.7,0.7,0.9,0.9)
     
 # Loop through a list of hPlus, print it into a pdf file
 # histo_Dict:
 # key hname, value list of hPlus objects from flist with name hTitle
-def makepdf(pages,outputFile):
+# outputFolder: if set to a path, print each page as separate pdf.
+def makepdf(pages,outputFile,outputFolder=None):
     nItems = len(pages)
     i      = 1
     nPad   = 1
     nPages = 0
     IsLast = False
     for page in pages:
-        # Prepare the canvas
+                # Prepare the canvas
         if (not "Setting" in page):
            DrawSameFromList(page["Title"],page["list"],page["legend"])
         else:
            DrawSameFromList(page["Title"],page["list"],page["legend"],page["Setting"])
+        iPeriod=0
+        iPos = 11
+        CMS_lumi.CMS_lumi(c1, iPeriod, iPos)
+        c1.cd()
+        c1.Update()
         # Open a new page
-        if(nPages==0): 
-            if(int(nItems/nPad)==1):
-                c1.Print(outputFile,"pdf")
+        if(outputFolder==None):
+            #Print all pages into same pdf
+            if(nPages==0): 
+                if(int(nItems/nPad)==1):
+                    c1.Print(outputFile,"pdf")
+                else:
+                    c1.Print(outputFile+"(","pdf")
+            if(i == nItems):
+                c1.Print(outputFile+")","pdf")
+                IsLast = True
             else:
-                c1.Print(outputFile+"(","pdf")
-        if(i == nItems):
-            c1.Print(outputFile+")","pdf")
-            IsLast = True
+                if(nPages!=0 and IsLast==False):
+                     c1.Print(outputFile,"pdf")
         else:
-            if(nPages!=0 and IsLast==False):
-                 c1.Print(outputFile,"pdf")
+            if not (os.path.exists(outputFolder)):     os.system("mkdir %s"%outputFolder)
+            c1.Print(outputFolder+outputFile.replace(".pdf","")+"_"+page["Title"]+".pdf")
+            #c1.Print(outputFolder+outputFile.replace(".pdf","")+"_"+str(nPages)+".pdf")
         nPages+=1
         i+=1
         nPad = 1
@@ -112,10 +132,10 @@ def getHlistFromFiles(flist,hKey,xLabel,yLabel,style_init=0):
 # hDict = {hName,hLabel}
 # hName = Name of histogram,   hLabel = Label for that histogram
 # returns list of hPlus
-def getHlistFromNames(tFile,hKeys,xLabel,yLabel):
+def getHlistFromNames(tFile,hKeys,xLabel,yLabel,style_init=0):
     hlist = []
     rootfile = TFile(tFile)
-    istyle=0
+    istyle=style_init
     for hDict in hKeys:
         hist  = rootfile.Get(hDict['hname'])
         # Default to use histogram name as label
@@ -128,3 +148,15 @@ def getHlistFromNames(tFile,hKeys,xLabel,yLabel):
         hlist.append(hPlus(hist,style(istyle),label))
         istyle += 1
     return hlist
+
+#Normalize all histograms in hlist to unit area:
+def selfnormalize(hlist,xlow=0,xup=0):
+    for hP in hlist:
+        if(not (xlow==0 and xup==0)):
+            xlowBin = hP.getTH1().FindBin(xlow)
+            xupBin  = hP.getTH1().FindBin(xup)
+            hP.getTH1().Scale( 1.0/hP.getTH1().Integral(xlowBin,xupBin))
+        else:
+            hP.getTH1().Scale( 1.0/hP.getTH1().Integral())
+        hP.getTH1().Sumw2(False)
+
