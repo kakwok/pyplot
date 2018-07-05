@@ -4,6 +4,7 @@ from style import *
 from util import *
 import glob,tdrstyle
 
+gROOT.SetBatch()
 tdrstyle.setTDRStyle()
 #global variables
 flistOfDict= []
