@@ -14,7 +14,7 @@ legend     = TLegend(0.5,0.7,0.9,0.9, "", "brNDC")
 #f1 = path to filename,  labelname = label for histograms from this file
 flistOfDict.append({'fname':f1,'hname':"labelname"})
 
-#Setting for ranges: xlow,xup, ylow,yup
+#Setting options:: xlow,xup, ylow,yup , logy, drawOpt
 Setting ={"xlow":0}
 
 #Make Pages (get from files)

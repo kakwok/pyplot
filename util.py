@@ -32,10 +32,16 @@ def DrawSameFromList(hTitle,hlist,legend,Setting=None):
     #hlist[0].getTH1().GetYaxis().SetRangeUser(0,5) 
     hlist[0].getTH1().SetTitle(hTitle)
     hlist[0].getTH1().GetYaxis().SetTitleOffset(1.4)
-    hlist.pop(0).getTH1().Draw("HIST")
+    if (not Setting is None and "drawOpt" in Setting):
+        hlist.pop(0).getTH1().Draw(Setting["drawOpt"]) 
+    else:
+        hlist.pop(0).getTH1().Draw("HIST")   # default drawOption
     for h in hlist:
         print h.getTH1().GetName(),h.getTH1().GetMean(1)
-        h.getTH1().Draw("Same HIST")
+        if (not Setting is None and "drawOpt" in Setting):
+            hlist.pop(0).getTH1().Draw(Setting["drawOpt"]+" same") 
+        else:
+            h.getTH1().Draw("Same HIST")     # default drawOption
     legend.SetTextFont(42)
     legend.SetTextSize(0.025)
     legend.SetBorderSize(0)
